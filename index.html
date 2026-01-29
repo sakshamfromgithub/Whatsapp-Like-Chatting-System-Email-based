@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WhatsApp Style Chat</title>
+
+    <!-- Firebase (compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --bg: #0b1220;
+            --panel: #0f1b33;
+            --card: #0c1630;
+            --ink: #eaf0ff;
+            --muted: #a9b4d0;
+            --brand: #22c55e;
+            --brand2: #2563eb;
+            --stroke: rgba(255, 255, 255, .08);
+            --shadow: 0 20px 60px rgba(0, 0, 0, .55);
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            background: radial-gradient(1200px 600px at 20% 10%, #16315f 0%, var(--bg) 55%),
+                radial-gradient(900px 500px at 90% 90%, #0b5cff33 0%, transparent 60%),
+                var(--bg);
+            font-family: Arial, sans-serif;
+            color: var(--ink);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 18px;
+        }
+
+        .app {
+            width: min(1080px, 100%);
+            height: min(680px, 100%);
+            background: linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .02));
+            border: 1px solid var(--stroke);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            display: flex;
+            backdrop-filter: blur(10px);
+        }
+
+        /* LOGIN */
+        .login {
+            width: min(520px, 100%);
+            margin: auto;
+            background: rgba(10, 18, 40, .55);
+            border: 1px solid var(--stroke);
+            border-radius: 18px;
+            padding: 22px;
+            box-shadow: 0 18px 50px rgba(0, 0, 0, .45);
+        }
+
+        .title {
+            font-size: 18px;
+            font-weight: 700;
+            margin: 0 0 6px
+        }
+
+        .sub {
+            color: var(--muted);
+            margin: 0 0 16px;
+            font-size: 13px;
+            line-height: 1.4
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 12px;
+            border-radius: 12px;
+            border: 1px solid var(--stroke);
+            background: rgba(255, 255, 255, .05);
+            color: var(--ink);
+            outline: none;
+        }
+
+        input::placeholder {
+            color: #b7c2e0aa
+        }
+
+        .btn {
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--stroke);
+            cursor: pointer;
+            color: var(--ink);
+            background: linear-gradient(180deg, rgba(37, 99, 235, .95), rgba(37, 99, 235, .70));
+            box-shadow: 0 10px 24px rgba(37, 99, 235, .25);
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .btn2 {
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--stroke);
+            cursor: pointer;
+            color: #07121e;
+            background: linear-gradient(180deg, rgba(34, 197, 94, .95), rgba(34, 197, 94, .60));
+            box-shadow: 0 10px 24px rgba(34, 197, 94, .22);
+            font-weight: 900;
+            white-space: nowrap;
+        }
+
+        .btn3 {
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--stroke);
+            cursor: pointer;
+            color: var(--ink);
+            background: rgba(255, 255, 255, .06);
+            box-shadow: none;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .btn:active,
+        .btn2:active,
+        .btn3:active {
+            transform: translateY(1px)
+        }
+
+        .hint {
+            margin-top: 10px;
+            color: var(--muted);
+            font-size: 12px
+        }
+
+        /* MAIN LAYOUT */
+        .left {
+            width: 360px;
+            background: linear-gradient(180deg, rgba(0, 0, 0, .25), rgba(0, 0, 0, .10));
+            border-right: 1px solid var(--stroke);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(180deg, rgba(0, 0, 0, .12), rgba(0, 0, 0, .04));
+        }
+
+        .lh {
+            padding: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            border-bottom: 1px solid var(--stroke);
+            background: rgba(0, 0, 0, .18);
+        }
+
+        .meBox {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0
+        }
+
+        .meName {
+            font-weight: 800;
+            font-size: 14px
+        }
+
+        .meEmail {
+            color: var(--muted);
+            font-size: 12px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 220px
+        }
+
+        .ghost {
+            background: rgba(255, 255, 255, .06);
+            border: 1px solid var(--stroke);
+            box-shadow: none;
+            padding: 10px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            color: var(--ink);
+            font-weight: 700;
+        }
+
+        .search {
+            padding: 12px;
+            border-bottom: 1px solid var(--stroke)
+        }
+
+        .users {
+            overflow: auto;
+            padding: 8px;
+            flex: 1;
+        }
+
+        .u {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 10px 10px;
+            border-radius: 14px;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .u:hover {
+            background: rgba(255, 255, 255, .05);
+            border-color: rgba(255, 255, 255, .06)
+        }
+
+        .u.active {
+            background: rgba(34, 197, 94, .12);
+            border-color: rgba(34, 197, 94, .22)
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 14px;
+            background: linear-gradient(180deg, rgba(34, 197, 94, .9), rgba(34, 197, 94, .45));
+            box-shadow: 0 10px 22px rgba(34, 197, 94, .18);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+        }
+
+        .uMeta {
+            min-width: 0
+        }
+
+        .uName {
+            font-weight: 800;
+            font-size: 14px
+        }
+
+        .uMail {
+            color: var(--muted);
+            font-size: 12px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 240px
+        }
+
+        .ch {
+            padding: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--stroke);
+            background: rgba(0, 0, 0, .18);
+            gap: 10px;
+        }
+
+        .peerTitle {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0
+        }
+
+        .peerName {
+            font-weight: 900;
+            font-size: 15px
+        }
+
+        .peerMail {
+            color: var(--muted);
+            font-size: 12px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 520px
+        }
+
+        .badge {
+            padding: 8px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--stroke);
+            background: rgba(255, 255, 255, .05);
+            color: var(--muted);
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .msgs {
+            flex: 1;
+            padding: 16px;
+            overflow: auto;
+            background:
+                radial-gradient(900px 500px at 30% 30%, rgba(34, 197, 94, .08), transparent 60%),
+                radial-gradient(900px 500px at 70% 70%, rgba(37, 99, 235, .10), transparent 60%);
+        }
+
+        .bubbleRow {
+            display: flex;
+            margin: 8px 0
+        }
+
+        .bubble {
+            max-width: min(560px, 80%);
+            padding: 10px 12px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, .08);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, .25);
+            line-height: 1.35;
+            font-size: 14px;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .mine {
+            justify-content: flex-end
+        }
+
+        .mine .bubble {
+            background: linear-gradient(180deg, rgba(37, 99, 235, .95), rgba(37, 99, 235, .55));
+            border-bottom-right-radius: 6px;
+        }
+
+        .theirs {
+            justify-content: flex-start
+        }
+
+        .theirs .bubble {
+            background: rgba(255, 255, 255, .06);
+            border-bottom-left-radius: 6px;
+        }
+
+        .time {
+            margin-top: 6px;
+            font-size: 11px;
+            color: rgba(255, 255, 255, .65);
+            text-align: right;
+        }
+
+        .composer {
+            padding: 12px;
+            border-top: 1px solid var(--stroke);
+            background: rgba(0, 0, 0, .18);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .send {
+            background: linear-gradient(180deg, rgba(34, 197, 94, .95), rgba(34, 197, 94, .60));
+            box-shadow: 0 10px 24px rgba(34, 197, 94, .22);
+            border: 1px solid rgba(34, 197, 94, .25);
+            padding: 12px 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 900;
+            color: #07121e;
+            white-space: nowrap;
+        }
+
+        .empty {
+            padding: 18px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        @media (max-width: 720px) {
+            .app {
+                flex-direction: column
+            }
+
+            .left {
+                width: 100%;
+                height: 44%
+            }
+
+            .right {
+                height: 56%
+            }
+
+            .meEmail {
+                max-width: 70vw
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- LOGIN -->
+    <div id="loginView" class="login" style="display:none;">
+        <p class="title">Login</p>
+        <p class="sub">Email-link quota hit ho gaya, isliye Google login best hai. (Ek click login)</p>
+
+        <div class="row">
+            <button class="btn2" onclick="loginWithGoogle()">Continue with Google</button>
+            <button class="btn3" onclick="showEmailLink()">Use Email Link</button>
+        </div>
+
+        <div id="emailBox" style="display:none; margin-top:14px;">
+            <div class="row">
+                <input id="emailInput" placeholder="yourname@gmail.com" />
+                <button class="btn" onclick="sendLoginLink()">Send Link</button>
+            </div>
+            <div class="hint" id="loginHint"></div>
+        </div>
+    </div>
+
+    <!-- APP -->
+    <div id="appView" class="app" style="display:none;">
+        <div class="left">
+            <div class="lh">
+                <div class="meBox">
+                    <div class="meName" id="meName">You</div>
+                    <div class="meEmail" id="meEmail">...</div>
+                </div>
+                <button class="ghost" onclick="logout()">Logout</button>
+            </div>
+
+            <div class="search">
+                <input id="searchInput" placeholder="Search user..." oninput="renderUsers()" />
+            </div>
+
+            <div class="users" id="usersList"></div>
+        </div>
+
+        <div class="right">
+            <div class="ch">
+                <div class="peerTitle">
+                    <div class="peerName" id="peerName">Select a user</div>
+                    <div class="peerMail" id="peerMail">To start private chat</div>
+                </div>
+
+                <div class="badge" id="chatBadge">No chat</div>
+            </div>
+
+
+            <div class="msgs" id="msgs">
+                <div class="empty">Left side se kisi user pe click karo ✅</div>
+            </div>
+
+            <div class="composer">
+                <input id="msgInput" placeholder="Type a message..."
+                    onkeydown="if(event.key==='Enter'){sendMessage();}" />
+                <button class="send" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ✅ PASTE YOUR FIREBASE CONFIG HERE
+        const firebaseConfig = {
+            apiKey: "AIzaSyCcNfCKp2Dhdfylvw1FkrShZvj2xEnQjyI",
+
+            authDomain: "massaging-sys.firebaseapp.com",
+
+            projectId: "massaging-sys",
+
+            storageBucket: "massaging-sys.firebasestorage.app",
+
+            messagingSenderId: "447078495471",
+
+            appId: "1:447078495471:web:d23a17c044a5f5b517971a",
+
+            measurementId: "G-VK5R9Z9605",
+        };
+        console.log("PROJECT:", firebaseConfig.projectId);
+
+
+
+
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // state
+        let me = null;
+        let meProfile = null;
+        let usersCache = [];
+        let activePeer = null;
+        let activeChatId = null;
+        let unsubUsers = null;
+        let unsubMsgs = null;
+        // test read users collection
+        db.collection("users").get()
+            .then(s => console.log(
+                "GET users size:",
+                s.size,
+                "ids:",
+                s.docs.map(d => d.id)
+            ))
+            .catch(e => console.log(
+                "GET users error:",
+                e.code,
+                e.message
+            ));
+        // views
+        function setView(isLoggedIn) {
+            document.getElementById("loginView").style.display = isLoggedIn ? "none" : "block";
+            document.getElementById("appView").style.display = isLoggedIn ? "flex" : "none";
+        }
+
+        function showEmailLink() {
+            const box = document.getElementById("emailBox");
+            box.style.display = (box.style.display === "block") ? "none" : "block";
+        }
+
+        // -------- Google login --------
+        async function loginWithGoogle() {
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                await auth.signInWithPopup(provider);
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        // -------- Email link (optional) --------
+        async function sendLoginLink() {
+            const email = document.getElementById("emailInput").value.trim();
+            if (!email) { document.getElementById("loginHint").innerText = "Email likho."; return; }
+
+            try {
+                await auth.sendSignInLinkToEmail(email, {
+                    url: window.location.href.split("?")[0],
+                    handleCodeInApp: true
+                });
+                localStorage.setItem("emailForSignIn", email);
+                document.getElementById("loginHint").innerText = "Email check karo (Inbox/Spam). Link click karke isi page ko open karo.";
+            } catch (err) {
+                document.getElementById("loginHint").innerText = err.message;
+            }
+        }
+
+        // handle email link if present (ignore errors)
+        (async function handleEmailLink() {
+            try {
+                if (auth.isSignInWithEmailLink(window.location.href)) {
+                    let email = localStorage.getItem("emailForSignIn");
+                    if (!email) email = prompt("Confirm your email:");
+                    await auth.signInWithEmailLink(email, window.location.href);
+                    history.replaceState({}, document.title, window.location.href.split("?")[0]);
+                }
+            } catch (e) {
+                history.replaceState({}, document.title, window.location.href.split("?")[0]);
+                console.log(e);
+            }
+        })();
+
+        // -------- Auth state --------
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                cleanupSubs();
+                setView(false);
+                return;
+            }
+
+            me = user;
+            setView(true);
+
+            // Ensure profile in Firestore
+            const uref = db.collection("users").doc(me.uid);
+            const snap = await uref.get();
+
+            if (!snap.exists) {
+                const defaultName = (me.displayName || (me.email || "user").split("@")[0]);
+                const name = prompt("Enter your name") || defaultName;
+
+                await uref.set({
+                    name: (name || defaultName).trim(),
+                    email: me.email || "",
+                    createdAt: Date.now()
+                });
+
+                meProfile = { name: (name || defaultName).trim(), email: (me.email || "") };
+                console.log("Logged in UID:", me.uid, "Email:", me.email);
+
+            } else {
+                meProfile = snap.data();
+            }
+
+            document.getElementById("meName").innerText = meProfile.name || "You";
+            document.getElementById("meEmail").innerText = meProfile.email || "";
+
+            startUsersListener();
+        });
+
+        function cleanupSubs() {
+            if (unsubUsers) { unsubUsers(); unsubUsers = null; }
+            if (unsubMsgs) { unsubMsgs(); unsubMsgs = null; }
+            activePeer = null;
+            activeChatId = null;
+        }
+
+        async function logout() {
+            cleanupSubs();
+            await auth.signOut();
+        }
+
+        // -------- Users list --------
+        function startUsersListener() {
+            if (unsubUsers) unsubUsers();
+
+            // ✅ same collection as GET
+            const ref = db.collection("users");
+
+            unsubUsers = ref.onSnapshot((snap) => {
+                console.log("Users snapshot size:", snap.size);
+
+                usersCache = [];
+                snap.forEach(doc => {
+                    if (doc.id === me.uid) return; // hide self
+                    const d = doc.data();
+                    usersCache.push({
+                        uid: doc.id,
+                        name: d.name || "User",
+                        email: d.email || ""
+                    });
+                });
+
+                renderUsers();
+            }, (err) => {
+                console.log("Users realtime error:", err.code, err.message);
+            });
+        }
+
+
+        function safeInitial(s) {
+            s = (s || "?").trim();
+            return s ? s[0].toUpperCase() : "?";
+        }
+
+        function renderUsers() {
+            const q = (document.getElementById("searchInput").value || "").trim().toLowerCase();
+            const list = document.getElementById("usersList");
+            list.innerHTML = "";
+
+            const filtered = usersCache.filter(u => {
+                if (!q) return true;
+                return (u.name || "").toLowerCase().includes(q) || (u.email || "").toLowerCase().includes(q);
+            });
+
+            if (filtered.length === 0) {
+                list.innerHTML = `<div class="empty">No users found.</div>`;
+                return;
+            }
+
+            filtered.forEach(u => {
+                const div = document.createElement("div");
+                div.className = "u" + (activePeer && activePeer.uid === u.uid ? " active" : "");
+                div.onclick = () => openPrivateChat(u);
+
+                const av = document.createElement("div");
+                av.className = "avatar";
+                av.textContent = safeInitial(u.name || u.email);
+
+                const meta = document.createElement("div");
+                meta.className = "uMeta";
+
+                const nm = document.createElement("div");
+                nm.className = "uName";
+                nm.textContent = u.name || "User";
+
+                const em = document.createElement("div");
+                em.className = "uMail";
+                em.textContent = u.email || "";
+
+                meta.appendChild(nm);
+                meta.appendChild(em);
+
+                div.appendChild(av);
+                div.appendChild(meta);
+                list.appendChild(div);
+            });
+        }
+
+        // -------- Private chat --------
+        function makeChatId(uid1, uid2) {
+            return [uid1, uid2].sort().join("_");
+        }
+        function niceTime(ms) {
+            try {
+                const d = new Date(ms);
+                return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            } catch (e) { return ""; }
+        }
+
+        function openPrivateChat(peer) {
+            activePeer = peer;
+            activeChatId = makeChatId(me.uid, peer.uid);
+
+            document.getElementById("peerName").innerText = peer.name || "User";
+            document.getElementById("peerMail").innerText = peer.email || "";
+            document.getElementById("chatBadge").innerText = "Private chat";
+
+            renderUsers();
+
+            if (unsubMsgs) unsubMsgs();
+
+            const msgsBox = document.getElementById("msgs");
+            msgsBox.innerHTML = "";
+
+            unsubMsgs = db.collection("chats").doc(activeChatId)
+                .collection("messages")
+                .orderBy("time")
+                .onSnapshot((snap) => {
+                    msgsBox.innerHTML = "";
+                    snap.forEach(doc => {
+                        const m = doc.data();
+                        const row = document.createElement("div");
+                        row.className = "bubbleRow " + (m.senderUid === me.uid ? "mine" : "theirs");
+
+                        const bubble = document.createElement("div");
+                        bubble.className = "bubble";
+                        bubble.textContent = m.text || "";
+
+                        const t = document.createElement("div");
+                        t.className = "time";
+                        t.textContent = niceTime(m.time);
+
+                        bubble.appendChild(t);
+                        row.appendChild(bubble);
+                        msgsBox.appendChild(row);
+                    });
+
+                    msgsBox.scrollTop = msgsBox.scrollHeight;
+                }, (err) => {
+                    console.log("Messages listener error:", err);
+                });
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById("msgInput");
+            const text = (input.value || "").trim();
+            if (!text) return;
+
+            if (!activeChatId || !activePeer) {
+                alert("Pehle left se kisi user ko select karo.");
+                return;
+            }
+
+            input.value = "";
+
+            await db.collection("chats").doc(activeChatId)
+                .collection("messages")
+                .add({
+                    text,
+                    time: Date.now(),
+                    senderUid: me.uid,
+                    senderName: meProfile?.name || "",
+                    receiverUid: activePeer.uid
+                });
+        }
+
+        function openNewChat() {
+            // simple WhatsApp style behavior
+            document.getElementById("peerName").innerText = "Select a user";
+            document.getElementById("peerMail").innerText = "Choose from left list";
+            document.getElementById("chatBadge").innerText = "New chat";
+
+            const msgsBox = document.getElementById("msgs");
+            msgsBox.innerHTML = `<div class="empty">Left side se kisi user pe click karo ✅</div>`;
+        }
+
+
+        // expose for onclick
+        window.loginWithGoogle = loginWithGoogle;
+        window.showEmailLink = showEmailLink;
+        window.sendLoginLink = sendLoginLink;
+        window.logout = logout;
+        window.sendMessage = sendMessage;
+        window.renderUsers = renderUsers;
+        window.openNewChat = openNewChat;
+
+    </script>
+
+</body>
+
+</html>
