@@ -411,7 +411,7 @@
     <!-- LOGIN -->
     <div id="loginView" class="login" style="display:none;">
         <p class="title">Login</p>
-        <p class="sub">Email-link quota hit ho gaya, isliye Google login best hai. (Ek click login)</p>
+        <p class="sub">use Google for Faster Experience</p>
 
         <div class="row">
             <button class="btn2" onclick="loginWithGoogle()">Continue with Google</button>
@@ -457,7 +457,7 @@
 
 
             <div class="msgs" id="msgs">
-                <div class="empty">Left side se kisi user pe click karo ✅</div>
+                <div class="empty">click any user available on side pannel</div>
             </div>
 
             <div class="composer">
@@ -548,7 +548,7 @@
                     handleCodeInApp: true
                 });
                 localStorage.setItem("emailForSignIn", email);
-                document.getElementById("loginHint").innerText = "Email check karo (Inbox/Spam). Link click karke isi page ko open karo.";
+                document.getElementById("loginHint").innerText = "check your Inbox/spam folder";
             } catch (err) {
                 document.getElementById("loginHint").innerText = err.message;
             }
@@ -781,7 +781,7 @@
             document.getElementById("chatBadge").innerText = "New chat";
 
             const msgsBox = document.getElementById("msgs");
-            msgsBox.innerHTML = `<div class="empty">Left side se kisi user pe click karo ✅</div>`;
+            msgsBox.innerHTML = `<div class="empty">click any user available on left pannel</div>`;
         }
 
 
